@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="500" height="500" style="border:1px solid #000000;">
+Your browser does not support the HTML canvas tag.
+</canvas>
+<script>
+var items = [];
+var L = 20;
+for (var i=0;i<4;++i) {
+items.push({x: 100, y: 200+i*L});
+}
+var canvas = document.getElementById("myCanvas");
+const ctx = canvas.getContext("2d");
+// 2. Create a new Image object
+const img = new Image();
+const food_img = new Image();
+
+// 3. Define what happens AFTER the image loads
+img.onload = function() {
+    // 4. Draw the image onto the canvas at coordinates (x: 0, y: 0)
+    ctx.drawImage(img, 0, 0);
+};
+
+// 5. Set the source URL (this triggers the loading process)
+img.src = "./pearl.png";
+food_img.src = "./food.png";
+keys = {}
+angle = -Math.PI / 2;
+d = 5*Math.PI / 180;
+let food = { x: 300, y: 300};
+let speed=1;
+function step() {
+ if (keys["ArrowLeft"]) {
+        angle -= d;
+    }
+     if (keys["ArrowRight"]) {
+        angle += d;
+    }
+if (1||keys["ArrowUp"]) {
+        items[0].x += speed* Math.cos(angle);
+items[0].y += speed* Math.sin(angle);
+
+    }
+
+   if (Math.hypot(items[0].x-food.x,items[0].y-food.y)<L){
+   food = { x: Math.random()*300, y: Math.random()*300};
+   speed+=0.1;
+   items.push({x:items[items.length-1].x,y:items[items.length-1].y});
+   }
+
+  ctx.fillStyle = "#fff";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "red";
+for (var i=1;i<items.length;++i) {
+    var dist = Math.hypot(items[i].x-items[i-1].x,items[i].y-items[i-1].y);
+    var u = items[i-1].x-items[i].x;
+    var v = items[i-1].y-items[i].y;
+    u/=dist;
+    v/=dist;
+    items[i].x=items[i-1].x-u*L;
+    items[i].y=items[i-1].y-v*L;
+    
+}
+for (var i=0;i<items.length;++i) {
+var item=items[i];
+ctx.drawImage(img, item.x, item.y, L,L);
+
+}
+ctx.drawImage(food_img, food.x, food.y, L,L);
+
+requestAnimationFrame(step);
+
+}
+
+requestAnimationFrame(step);
+document.addEventListener("keyup", (event) => {
+   keys[event.key] = false;
+});
+document.addEventListener("keydown", (event) => {
+    console.log(`Key pressed: ${event.key}`);
+keys[event.key] = true;
+   
+    
+});
+</script>
+</body>
+</html>
+
