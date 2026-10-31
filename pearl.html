@@ -8,6 +8,8 @@ Your browser does not support the HTML canvas tag.
 <script>
 var items = [];
 var L = 20;
+var W=500;
+var H=500;
 for (var i=0;i<4;++i) {
 items.push({x: 100, y: 200+i*L});
 }
@@ -31,6 +33,15 @@ angle = -Math.PI / 2;
 d = 5*Math.PI / 180;
 let food = { x: 300, y: 300};
 let speed=1;
+function wrap(item){
+    var x=item.x;
+    while (x>W)x=x-W;
+    while(x<0)x=W+x;
+    var y=item.y;
+    if (y>H)y=y-H;
+    while(y<0)y=H+y;
+    return {x:x,y:y};
+}
 function step() {
  if (keys["ArrowLeft"]) {
         angle -= d;
@@ -43,8 +54,8 @@ if (1||keys["ArrowUp"]) {
 items[0].y += speed* Math.sin(angle);
 
     }
-
-   if (Math.hypot(items[0].x-food.x,items[0].y-food.y)<L){
+   var virtualhead=wrap(items[0]);
+   if (Math.hypot(virtualhead.x-food.x,virtualhead.y-food.y)<L){
    food = { x: Math.random()*300, y: Math.random()*300};
    speed+=0.1;
    items.push({x:items[items.length-1].x,y:items[items.length-1].y});
@@ -63,9 +74,12 @@ for (var i=1;i<items.length;++i) {
     items[i].y=items[i-1].y-v*L;
     
 }
+// handle out of screen
+console.log(items[0]);
 for (var i=0;i<items.length;++i) {
 var item=items[i];
-ctx.drawImage(img, item.x, item.y, L,L);
+   var vitem=wrap(item);
+ctx.drawImage(img, vitem.x,vitem.y,L,L);
 
 }
 ctx.drawImage(food_img, food.x, food.y, L,L);
