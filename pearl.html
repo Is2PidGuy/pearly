@@ -31,8 +31,9 @@ food_img.src = "./food.png";
 keys = {}
 angle = -Math.PI / 2;
 d = 5*Math.PI / 180;
-let food = { x: 300, y: 300};
+let foods = [{ x: 300, y: 300, size:L}]
 let speed=1;
+let score=0;
 function wrap(item){
     var x=item.x;
     while (x>W)x=x-W;
@@ -42,6 +43,8 @@ function wrap(item){
     while(y<0)y=H+y;
     return {x:x,y:y};
 }
+let eatAudio = new Audio('./marble.mp3');
+
 function step() {
  if (keys["ArrowLeft"]) {
         angle -= d;
@@ -55,13 +58,16 @@ items[0].y += speed* Math.sin(angle);
 
     }
    var virtualhead=wrap(items[0]);
+   var food = foods[foods.length-1];
    if (Math.hypot(virtualhead.x-food.x,virtualhead.y-food.y)<L){
-   food = { x: Math.random()*300, y: Math.random()*300};
+    eatAudio.play();
+   foods.push({ x: Math.random()*300, y: Math.random()*300, size: L});
    speed+=0.1;
+   score++;
    items.push({x:items[items.length-1].x,y:items[items.length-1].y});
    }
 
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = "rgb(250,250,250)";
 ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.fillStyle = "red";
 for (var i=1;i<items.length;++i) {
@@ -75,7 +81,6 @@ for (var i=1;i<items.length;++i) {
     
 }
 // handle out of screen
-console.log(items[0]);
 for (var i=0;i<items.length;++i) {
 var item=items[i];
    var vitem=wrap(item);
@@ -83,7 +88,17 @@ ctx.drawImage(img, vitem.x,vitem.y,L,L);
 
 }
 ctx.drawImage(food_img, food.x, food.y, L,L);
-
+for (var i=0;i<foods.length;++i){
+    var food=foods[i];
+    ctx.drawImage(food_img, food.x, food.y, food.size,food.size);
+}
+foods=foods.filter(f=>f.size>0);
+for (var i=0;i+1<foods.length;++i){
+    foods[i].size--;
+}
+ctx.fillStyle="rgb(0,0,0)";
+ctx.font="20px Ariel";
+ctx.fillText("Score " + score, W-80,30);
 requestAnimationFrame(step);
 
 }
