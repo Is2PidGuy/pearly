@@ -11,8 +11,19 @@ var L = 20;
 var W=500;
 var H=500;
 for (var i=0;i<4;++i) {
-items.push({x: 100, y: 200+i*L});
+items.push({x: 50, y: 200+i*L,size:L});
 }
+var bricksGrid=[
+    [0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,0,1,1,1,0],
+    [0,1,0,0,0,0,0,1,0],
+    [0,1,0,0,0,0,0,1,0],
+    [0,0,0,0,0,0,0,0,0],
+    [0,1,0,0,0,0,0,1,0],
+    [0,1,0,0,0,0,0,1,0],
+    [0,1,1,1,0,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0],
+]
 var canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 // 2. Create a new Image object
@@ -44,7 +55,40 @@ function wrap(item){
     return {x:x,y:y};
 }
 let eatAudio = new Audio('./marble.mp3');
+let bricks=[]
+for (var i=0;i<9;++i){
+    for (var j=0;j<9;++j){
+        if (!bricksGrid[i][j]) continue;
+        var ox=40;
+        var oy=40;
+        var size=40;
+     
+        var x=i*size;
+        var y=j*size;
+        bricks.push({x:x+ox,y:y+oy,size:size})
+    }
+}
 
+function distance(a, b) {
+    return Math.hypot(a.x-b.x,a.y-b.y);
+}
+
+function collide(circle,rc) {
+    if (circle.x+circle.size/2 <rc.x) return false;
+    if (circle.x-circle.size/2 >rc.x+rc.size) return false;
+    if (circle.y+circle.size/2 <rc.y) return false;
+    if (circle.y-circle.size/2 >rc.y+rc.size) return false;
+    
+    if (distance(circle,{x:rc.x,y:rc.y})<circle.size) return true
+    if (distance(circle,{x:rc.x,y:rc.y+rc.size})<circle.size) return true
+
+    if (distance(circle,{x:rc.x+rc.size,y:rc.y})<circle.size) return true
+
+    if (distance(circle,{x:rc.x+rc.size,y:rc.y+rc.size})<circle.size) return true
+    return true
+}
+
+let crash=false;
 function step() {
  if (keys["ArrowLeft"]) {
         angle -= d;
@@ -52,7 +96,7 @@ function step() {
      if (keys["ArrowRight"]) {
         angle += d;
     }
-if (1||keys["ArrowUp"]) {
+if (!crash||keys["ArrowUp"]) {
         items[0].x += speed* Math.cos(angle);
 items[0].y += speed* Math.sin(angle);
 
@@ -61,12 +105,34 @@ items[0].y += speed* Math.sin(angle);
    var food = foods[foods.length-1];
    if (Math.hypot(virtualhead.x-food.x,virtualhead.y-food.y)<L){
     eatAudio.play();
-   foods.push({ x: Math.random()*300, y: Math.random()*300, size: L});
+    while (true){
+        var x= Math.random()*(W-L)
+        var y=Math.random()*(H-L)
+        let skip=false
+        for (var i=0;i<bricks.length;++i) {
+            if (collide({x,y,size},bricks[i])) {
+            skip=true;
+            break;
+            }
+
+        }
+        if (skip)continue;
+        foods.push({ x: x, y:y, size: L});
+break;
+    }
    speed+=0.1;
    score++;
-   items.push({x:items[items.length-1].x,y:items[items.length-1].y});
+   items.push({x:items[items.length-1].x,y:items[items.length-1].y,size:L});
    }
+ for (var i=0;i<bricks.length;++i) {
+    for (var j=0;j<items.length;++j){
+            if (collide(items[j],bricks[i])) {
+            crash=true;
+            
+            }
 
+        }
+    }
   ctx.fillStyle = "rgb(250,250,250)";
 ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.fillStyle = "red";
@@ -84,21 +150,33 @@ for (var i=1;i<items.length;++i) {
 for (var i=0;i<items.length;++i) {
 var item=items[i];
    var vitem=wrap(item);
-ctx.drawImage(img, vitem.x,vitem.y,L,L);
+ctx.drawImage(img, vitem.x-L/2,vitem.y-L/2,L,L);
 
 }
-ctx.drawImage(food_img, food.x, food.y, L,L);
 for (var i=0;i<foods.length;++i){
     var food=foods[i];
-    ctx.drawImage(food_img, food.x, food.y, food.size,food.size);
+    ctx.drawImage(food_img, food.x-food.size/2, food.y-food.size/2, food.size,food.size);
+
 }
 foods=foods.filter(f=>f.size>0);
 for (var i=0;i+1<foods.length;++i){
     foods[i].size--;
 }
+    for (var j=0;j<bricks.length;++j){
+        
+        var x=bricks[j].x;
+        var y=bricks[j].y;
+        ctx.fillStyle="rgb(230,230,230)";
+        ctx.fillRect(x, y, bricks[j].size,bricks[j].size);
+    }
 ctx.fillStyle="rgb(0,0,0)";
 ctx.font="20px Ariel";
 ctx.fillText("Score " + score, W-80,30);
+if (crash) {
+    ctx.fillStyle="#f00";
+
+ctx.fillText("CRASH", W/2,H/2);
+}
 requestAnimationFrame(step);
 
 }
